@@ -47,8 +47,10 @@ except KeyboardInterrupt:
     print("Shutting Down Server")
 
 finally:
-   server_socket.close()
-   print("Server closed")
+    for x in clients:
+        x.close()
+    server_socket.close()
+    print("Server closed")
     
 
 server_socket.close()
