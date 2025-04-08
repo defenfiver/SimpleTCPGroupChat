@@ -28,11 +28,13 @@ class App:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((host, port))
+                s.send("Cullen".encode())
                 while self.running:
                     data = s.recv(1024)
                     if not data:
                         break
                     self.data_queue.put(data.decode())
+                    print(data.decode())
         except Exception as e:
              self.data_queue.put(f"Error: {e}")
 
