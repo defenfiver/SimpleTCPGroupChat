@@ -5,7 +5,6 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 def handleClient(sock):
     # Handle communication with one client
-    sock.send("Enter your name".encode())
     try: 
         name = sock.recv(1024).decode()  # Receive the name from the client
     except ConnectionResetError:
@@ -68,10 +67,8 @@ except KeyboardInterrupt:
     print("Shutting Down Server")
 
 finally:
-    for x in clients:
-        x.close()
-    server_socket.close()
-    print("Server closed")
+   server_socket.close()
+   print("Server closed")
     
 
 server_socket.close()
