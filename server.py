@@ -4,15 +4,26 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 def handleClient(sock):
     # Handle communication with one client
-    sock.send(b"Enter your name")
-    name = sock.recv(1024)  # Receive the name from the client
+    sock.send("Enter your name".encode())
+    name = sock.recv(1024).decode()  # Receive the name from the client
     clients[sock] = name
     name = str(name)
-    sock.send(b"Client connected")
+    sock.send("Client connected".encode())
     print(f"Client connected: {name}")
-    print(f"All connected clients: {clients}")
+    names = ""
+    for x in clients:
+        names = f'{names}, {clients[x]}'
+    print(f"All connected clients: {names}")
+    while True:
+        data = sock.recv(1024).decode()
+        data = f'{name}: {data}'
+        sendClients(data)
     # Remember to close the socket when done
     sock.close()
+
+def sendClients(message):
+    for x in clients:
+        x.send(message.encode())
 
 def accepts():
     while True:
@@ -23,7 +34,7 @@ def accepts():
 
 clients = {}
 server_socket = socket(AF_INET, SOCK_STREAM)
-server_socket.bind(("", 5000))
+server_socket.bind(("", 801))
 server_socket.listen(4)
 
 try:
