@@ -18,8 +18,7 @@ def accepts():
     while True:
         connection_socket, tmp = server_socket.accept()
         print("User connected")
-        connection_socket.send("Hi".encode())
-        Thread(target=handleClient, args=(connection_socket,))
+        Thread(target=handleClient, args=(connection_socket,)).start()
         
 
 clients = {}
