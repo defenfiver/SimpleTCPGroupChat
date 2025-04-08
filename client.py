@@ -22,7 +22,7 @@ class App:
         self.update_gui()
 
     def read_socket(self):
-        host = '127.0.0.1'  # Or "localhost"
+        host = "localhost"  # Or "localhost"
         port = 5000         # Replace with your port
 
         try:
