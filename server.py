@@ -4,11 +4,10 @@ from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
 def handleClient(sock):
     # Handle communication with one client
-    sock.send("Enter your name".encode())
+    #sock.send("Server: Enter your name".encode())
     name = sock.recv(1024).decode()  # Receive the name from the client
     clients[sock] = name
     name = str(name)
-    sock.send("Client connected".encode())
     print(f"Client connected: {name}")
     names = ""
     for x in clients:
@@ -18,8 +17,6 @@ def handleClient(sock):
         data = sock.recv(1024).decode()
         data = f'{name}: {data}'
         sendClients(data)
-    # Remember to close the socket when done
-    sock.close()
 
 def sendClients(message):
     for x in clients:
@@ -47,10 +44,8 @@ except KeyboardInterrupt:
     print("Shutting Down Server")
 
 finally:
-    for x in clients:
-        x.close()
-    server_socket.close()
-    print("Server closed")
+   server_socket.close()
+   print("Server closed")
     
 
 server_socket.close()

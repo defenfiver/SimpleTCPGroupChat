@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk, simpledialog
 import threading
 import socket
 import queue
@@ -7,27 +8,53 @@ class App:
     def __init__(self, master):
         self.master = master
         master.title("Socket Reader")
+        master.geometry("500x400")
 
-        self.label_text = tk.StringVar()
-        self.label = tk.Label(master, textvariable = self.label_text)
-        self.label.pack()
+        # prompt for user name
+        self.name = simpledialog.askstring("Name", "Enter your name:")
+        if not self.name:
+            master.destroy()
+            return
 
-        self.entry = tk.Entry(master)
-        self.entry.pack()
+        self.top_frame = tk.Frame(master)
+        self.top_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-        self.send_button = tk.Button(master, text="Send", command=self.send_message)
-        self.send_button.pack()
+        self.canvas = tk.Canvas(self.top_frame)
+        self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        self.scrollbar = ttk.Scrollbar(self.top_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollbar.pack(side=tk.LEFT, fill=tk.Y)
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.messages_frame = tk.Frame(self.canvas)
+        self.canvas_window = self.canvas.create_window((0,0), window=self.messages_frame, anchor="nw")
+
+        self.messages_frame.bind("<Configure>", self.on_frame_configure)
+
+        self.bottom_frame = tk.Frame(master)
+        self.bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        self.entry = tk.Entry(self.bottom_frame)
+        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5, pady=5)
+
+        self.send_button = tk.Button(
+            self.bottom_frame, text="Send", command=self.send_message
+        )
+        self.send_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.sock = None
-
         self.data_queue = queue.Queue()
         self.running = True
 
-        self.socket_thread = threading.Thread(target=self.read_socket)
-        self.socket_thread.daemon = True  # Allow program to exit even if thread is running
+        self.socket_thread = threading.Thread(target=self.read_socket, daemon=True)
         self.socket_thread.start()
 
         self.update_gui()
+
+    def send_name(self):
+        if self.sock:
+            self.sock.send(self.name.encode())
 
     def send_message(self):
         if self.sock:
@@ -35,13 +62,30 @@ class App:
             self.sock.send(message.encode())
             self.entry.delete(0, tk.END)
 
+    def on_frame_configure(self, event):
+        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def show_message(self, text):
+        label = tk.Label(
+            self.messages_frame,
+            text=text,
+            anchor="w",
+            justify="left",
+            wraplength=400
+        )
+        label.pack(fill=tk.X, expand=True, padx=5, pady=5)
+
+        self.canvas.update_idletasks()
+        self.canvas.yview_moveto(1.0)
+
     def read_socket(self):
         host = "localhost"  # Or "localhost"
-        port = 801        # Replace with your port
+        port = 801
 
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect((host, port))
+            self.send_name()
             while self.running:
                 data = self.sock.recv(1024)
                 if not data:
@@ -52,18 +96,20 @@ class App:
 
     def update_gui(self):
         try:
-            data = self.data_queue.get_nowait()
-            self.label_text.set(data)
+            while True:
+                msg = self.data_queue.get_nowait()
+                self.show_message(msg)
         except queue.Empty:
-            pass  # No data yet, ignore
+            pass
+
         if self.running:
-            self.master.after(100, self.update_gui) # Check every 100 ms
-        
+            self.master.after(100, self.update_gui)
 
     def close(self):
         self.running = False
+        if self.sock:
+            self.sock.close()
         self.master.destroy()
-
 
 root = tk.Tk()
 app = App(root)
