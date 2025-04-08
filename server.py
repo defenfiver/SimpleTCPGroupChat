@@ -1,4 +1,3 @@
-from ctypes import WinError
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 
@@ -27,8 +26,7 @@ def handleClient(sock):
             sock.close()
             return
         sendClients(f'[{name}]: {data}'.encode())
-    # Remember to close the socket when done
-    sock.close()
+
 
 def getAllClients():
     if not clients.keys():
@@ -50,27 +48,29 @@ def accepts():
     while True:
         connection_socket, tmp = server_socket.accept()
         Thread(target=handleClient, args=(connection_socket,)).start()
-        
 
-clients = {}
-server_socket = socket(AF_INET, SOCK_STREAM)
-server_socket.bind(("", 801))
-server_socket.listen(4)
 
-try:
-    while True:
-        acceptThread = Thread(target = accepts)
-        acceptThread.start()
-        acceptThread.join()
+if __name__ == "__main__":
+    global clients
+    clients = {}
+    server_socket = socket(AF_INET, SOCK_STREAM)
+    server_socket.bind(("", 801))
+    server_socket.listen(4)
 
-except KeyboardInterrupt:
-    print("Shutting Down Server")
+    try:
+        while True:
+            acceptThread = Thread(target = accepts)
+            acceptThread.start()
+            acceptThread.join()
 
-finally:
-   server_socket.close()
-   print("Server closed")
+    except KeyboardInterrupt:
+        print("Shutting Down Server")
+
+    finally:
+       server_socket.close()
+       print("Server closed")
     
 
-server_socket.close()
+    server_socket.close()
 
     
