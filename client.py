@@ -12,6 +12,14 @@ class App:
         self.label = tk.Label(master, textvariable = self.label_text)
         self.label.pack()
 
+        self.entry = tk.Entry(master)
+        self.entry.pack()
+
+        self.send_button = tk.Button(master, text="Send", command=self.send_message)
+        self.send_button.pack()
+
+        self.sock = None
+
         self.data_queue = queue.Queue()
         self.running = True
 
@@ -21,20 +29,24 @@ class App:
 
         self.update_gui()
 
+    def send_message(self):
+        if self.sock:
+            message = self.entry.get()
+            self.sock.send(message.encode())
+            self.entry.delete(0, tk.END)
+
     def read_socket(self):
         host = "localhost"  # Or "localhost"
-        port = 5000         # Replace with your port
+        port = 80         # Replace with your port
 
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect((host, port))
-                s.send("Cullen".encode())
-                while self.running:
-                    data = s.recv(1024)
-                    if not data:
-                        break
-                    self.data_queue.put(data.decode())
-                    print(data.decode())
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock.connect((host, port))
+            while self.running:
+                data = self.sock.recv(1024)
+                if not data:
+                    break
+                self.data_queue.put(data.decode())
         except Exception as e:
              self.data_queue.put(f"Error: {e}")
 
@@ -46,6 +58,7 @@ class App:
             pass  # No data yet, ignore
         if self.running:
             self.master.after(100, self.update_gui) # Check every 100 ms
+        
 
     def close(self):
         self.running = False
