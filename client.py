@@ -3,6 +3,10 @@ from tkinter import ttk, simpledialog
 import threading
 import socket
 import queue
+import tkinter
+import tkinter.dialog
+import tkinter.messagebox
+import tkinter.simpledialog
 
 class App:
     def __init__(self, master):
@@ -91,14 +95,19 @@ class App:
                 if not data:
                     break
                 self.data_queue.put(data.decode())
+        except ConnectionResetError:
+            app.close()
+            return
         except Exception as e:
              self.data_queue.put(f"Error: {e}")
 
     def update_gui(self):
         try:
-            while True:
+            while self.running:
                 msg = self.data_queue.get_nowait()
                 self.show_message(msg)
+            app.close()
+            return
         except queue.Empty:
             pass
 
@@ -109,9 +118,12 @@ class App:
         self.running = False
         if self.sock:
             self.sock.close()
-        self.master.destroy()
+        # self.master.destroy()
+        self.master.quit()
 
 root = tk.Tk()
 app = App(root)
 root.protocol("WM_DELETE_WINDOW", app.close) # Handle window close event
 root.mainloop()
+tmp = tk.Tk()
+tkinter.messagebox.showerror("Error", "Server closed unexpectedly")

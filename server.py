@@ -1,4 +1,5 @@
 from ast import Try
+from sqlite3 import connect
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
 from xmlrpc import server
@@ -30,6 +31,8 @@ def handleClient(sock):
             sendClients(f'[Server]: {name} has disconnected'.encode())
             sendClients(f"[Server]: Users remaining: {getAllClients()}".encode())
             sock.close()
+            return
+        except ConnectionAbortedError:  #Happens when the server is stopped, closing is handled outside of threads
             return
         sendClients(f'[{name}]: {data}'.encode())  # Sends the message sent from one user to ever client currently connected
 
@@ -80,6 +83,8 @@ def main():
                     running = False
                     server_socket.close()
                     print("Server closed")
+                    for x in clients:  # Closes client sockets so the connections don't remain open
+                        x.close()
                     return
     except KeyboardInterrupt:
         server_socket.close()
