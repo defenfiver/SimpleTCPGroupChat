@@ -1,8 +1,5 @@
-from ast import Try
-from sqlite3 import connect
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEADDR
-from xmlrpc import server
 
 
 def handleClient(sock):
@@ -94,7 +91,7 @@ def main():
 if __name__ == "__main__":
     clients = {}  # A dictionary of client sockets and the names attached to them, sockets being the unique key
     server_socket = socket(AF_INET, SOCK_STREAM)
-    server_socket.bind(("", 801))
+    server_socket.bind(("", 5000))
     server_socket.listen(4)
     global running
     running = True

@@ -18,7 +18,10 @@ class App:
         self.name = simpledialog.askstring("Name", "Enter your name:")
         if not self.name:
             master.destroy()
+            master.quit()
             return
+        global nameHappened
+        nameHappened = True
 
         self.top_frame = tk.Frame(master)
         self.top_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
@@ -84,7 +87,7 @@ class App:
 
     def read_socket(self):
         host = "localhost"  # Or "localhost"
-        port = 801
+        port = 5000
 
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -97,6 +100,7 @@ class App:
                 self.data_queue.put(data.decode())
         except ConnectionResetError:
             app.close()
+            errorHappened = True
             return
         except Exception as e:
              self.data_queue.put(f"Error: {e}")
@@ -114,16 +118,24 @@ class App:
         if self.running:
             self.master.after(100, self.update_gui)
 
-    def close(self):
+    def safeclose(self):
         self.running = False
         if self.sock:
             self.sock.close()
         # self.master.destroy()
         self.master.quit()
 
+    def close(self):
+        self.safeclose()
+        tmp = tk.Tk()
+        tkinter.messagebox.showerror("Error", "Server closed unexpectedly")
+
+errorHappened = False
+global nameHappened
+nameHappened = False
 root = tk.Tk()
 app = App(root)
-root.protocol("WM_DELETE_WINDOW", app.close) # Handle window close event
-root.mainloop()
-tmp = tk.Tk()
-tkinter.messagebox.showerror("Error", "Server closed unexpectedly")
+root.protocol("WM_DELETE_WINDOW", app.safeclose) # Handle window close event
+if nameHappened:
+    root.mainloop()
+
