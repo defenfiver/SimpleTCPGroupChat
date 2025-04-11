@@ -55,7 +55,12 @@ def sendClients(message):
     message: the message to be sent to every client
     """
     for x in clients:
-        x.send(message)
+        try: 
+            x.send(message)
+        except BrokenPipeError:
+            pass
+        except OSError:
+            pass
     print(f'{message.decode()}')
 
 def accepts():

@@ -87,7 +87,7 @@ class App:
 
     def read_socket(self):
         host = "localhost"  # Or "localhost"
-        port = 5000
+        port = 5001
 
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
