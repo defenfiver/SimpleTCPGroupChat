@@ -6,34 +6,40 @@ def handleClient(sock):
     """
     Handles the connection between the server and one client
 
-    sock: the socket used for the client 
+    sock: the socket used for the client
     """
-    try: 
+    try:
         name = sock.recv(1024).decode()  # Receive the name from the client
-    except ConnectionResetError:  # Happens when the client is closed 
+    except ConnectionResetError:  # Happens when the client is closed
         sock.close()
         print("[Server Error]: Client closed before name was entered")
         return
     clients[sock] = name  # Adds to the client dictionary, to be able to store in between threads
     name = str(name)
-    sendClients(f'[Server]: {name} has connected'.encode())  
-    data = f'[Server]: Currently Connected: {getAllClients()}'  
+    sendClients(f'[Server]: {name} has connected'.encode())
+    data = f'\n[Server]: Currently Connected: {getAllClients()}'
     sock.send(data.encode())  # Sends Currently Connected Message to only the user who is newly connecting
     print(f'{data} (Only sent to {name})')  # Prints the messsage to the server console
     while True:  # Always active, as it ends when the user closes their client
         try:
             data = sock.recv(1024).decode()
-        except ConnectionResetError:  # Happens when the client is closed 
+        except (ConnectionResetError, OSError):  # Happens when the client is closed
             clients.pop(sock)
             sendClients(f'[Server]: {name} has disconnected'.encode())
             sendClients(f"[Server]: Users remaining: {getAllClients()}".encode())
             sock.close()
             return
         except ConnectionAbortedError:  #Happens when the server is stopped, closing is handled outside of threads
+            sock.send(f'[Server] Server Closed'.encode())
             return
-        sendClients(f'[{name}]: {data}'.encode())  # Sends the message sent from one user to ever client currently connected
-
-
+        if data != "":
+            sendClients(f'[{name}]: {data}'.encode())  # Sends the message sent from one user to ever client currently connected
+        else:
+            clients.pop(sock)
+            sendClients(f'[Server]: {name} has disconnected'.encode())
+            sendClients(f"[Server]: Users remaining: {getAllClients()}".encode())
+            sock.close()
+            return
 def getAllClients() -> str:
     """
     returns the names of all users connected to the server as a string
@@ -41,7 +47,7 @@ def getAllClients() -> str:
     if not clients.keys():  # If no one is connected
         return ""
     nameList = []
-    for x in clients:  # Creates a list of names of the users 
+    for x in clients:  # Creates a list of names of the users
         nameList.append(clients[x])
     names = nameList.pop(0)
     for x in nameList:
@@ -55,11 +61,9 @@ def sendClients(message):
     message: the message to be sent to every client
     """
     for x in clients:
-        try: 
+        try:
             x.send(message)
-        except BrokenPipeError:
-            pass
-        except OSError:
+        except (BrokenPipeError, OSError):
             pass
     print(f'{message.decode()}')
 
@@ -68,7 +72,7 @@ def accepts():
     Accepts all connection to the server's socket and creates a thread to handle each connection asynchronously
     """
     while running:
-        try: 
+        try:
             connection_socket, tmp = server_socket.accept()
             Thread(target=handleClient, args=(connection_socket,)).start()
         except OSError:
@@ -101,10 +105,3 @@ if __name__ == "__main__":
     global running
     running = True
     main()
-
-    
-    
-
-    
-
-    

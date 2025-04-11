@@ -100,7 +100,6 @@ class App:
                 self.data_queue.put(data.decode())
         except ConnectionResetError:
             app.close()
-            errorHappened = True
             return
         except Exception as e:
              self.data_queue.put(f"Error: {e}")
@@ -127,10 +126,10 @@ class App:
 
     def close(self):
         self.safeclose()
+        print("closing")
         tmp = tk.Tk()
         tkinter.messagebox.showerror("Error", "Server closed unexpectedly")
 
-errorHappened = False
 global nameHappened
 nameHappened = False
 root = tk.Tk()
